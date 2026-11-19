@@ -2,7 +2,13 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createWorkersAI } from "workers-ai-provider";
 import { callable, routeAgentRequest } from "agents";
 import { AIChatAgent, type OnChatMessageOptions } from "@cloudflare/ai-chat";
-import { convertToModelMessages, stepCountIs, streamText, tool } from "ai";
+import {
+  convertToModelMessages,
+  stepCountIs,
+  streamText,
+  tool,
+  type StopCondition
+} from "ai";
 import { z } from "zod";
 import { ATS_LIST, detectBoard, fetchBoard, guessSlug, type Ats } from "./ats";
 import {
@@ -84,6 +90,23 @@ export type LeadFilter = {
 const SCAN_INTERVAL_SECONDS = 6 * 60 * 60;
 const BOARD_CONCURRENCY = 3;
 const LLAMA = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+const MAX_CHAT_STEPS = 10;
+const MAX_TOOL_FAILURES = 3;
+
+/** End the tool loop once any one tool has failed MAX_TOOL_FAILURES times in a turn. */
+// oxlint-disable-next-line no-explicit-any -- matches the SDK's own stepCountIs(): StopCondition<any>
+const toolFailedRepeatedly: StopCondition<any> = ({ steps }) => {
+  const failures = new Map<string, number>();
+  for (const step of steps) {
+    for (const part of step.content) {
+      if (part.type !== "tool-error") continue;
+      const n = (failures.get(part.toolName) ?? 0) + 1;
+      if (n >= MAX_TOOL_FAILURES) return true;
+      failures.set(part.toolName, n);
+    }
+  }
+  return false;
+};
 
 export class JobSearchAgent extends AIChatAgent<Env, JobSearchState> {
   maxPersistedMessages = 200;
@@ -577,11 +600,15 @@ When you list leads, show a compact table: id, company, title, fit, location, an
           execute: async () => this.recentRuns()
         })
       },
-      stopWhen: stepCountIs(10),
+      stopWhen: [stepCountIs(MAX_CHAT_STEPS), toolFailedRepeatedly],
       abortSignal: options?.abortSignal
     });
 
-    return result.toUIMessageStreamResponse();
+    return result.toUIMessageStreamResponse({
+      // The default masks every error as "An error occurred."; show the real cause.
+      onError: (error) =>
+        error instanceof Error ? error.message : String(error)
+    });
   }
 }
 

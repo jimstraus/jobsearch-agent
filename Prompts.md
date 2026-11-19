@@ -25,3 +25,5 @@ Session: 2026-11-18
 4. I have an Anthropic key to store as a worker secret. Cloudflare is logged in. I'll add companies by hand, and 6 hours is good.
 
 5. Commit it and push and then check up
+
+6. Yes, show the real error and lower the limit to 3 times
