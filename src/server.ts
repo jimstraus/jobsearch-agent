@@ -16,6 +16,7 @@ import {
   type Fit,
   type Prefs
 } from "./scoring";
+import { withDedupedStreams } from "./llama-stream-fix";
 
 export { BoardScanAgent };
 
@@ -432,7 +433,7 @@ export class JobSearchAgent extends AIChatAgent<Env, JobSearchState> {
       });
       return anthropic(this.env.CHAT_MODEL || "claude-opus-5-5");
     }
-    return createWorkersAI({ binding: this.env.AI })(LLAMA);
+    return createWorkersAI({ binding: withDedupedStreams(this.env.AI) })(LLAMA);
   }
 
   private chatSystemPrompt(): string {
