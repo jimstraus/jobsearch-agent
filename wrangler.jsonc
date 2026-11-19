@@ -17,7 +17,9 @@
   "vars": {
     // Models (override per environment). Scoring falls back to Workers AI Llama 3.3 if Claude fails.
     "CHAT_MODEL": "claude-opus-5-5",
-    "SCORE_MODEL": "claude-opus-5-5",
+    "SCORE_MODEL": "claude-haiku-5-5",
+    // Haiku at "low" grades leniently; "medium" keeps it closer to Opus.
+    "SCORE_EFFORT": "medium",
     // Set both to route Claude through Cloudflare AI Gateway; leave empty to call Anthropic directly.
     "CF_ACCOUNT_ID": "",
     "AI_GATEWAY_ID": ""

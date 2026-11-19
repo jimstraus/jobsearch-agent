@@ -11,12 +11,12 @@ replaced by SQL, and the Sheet's checkbox workflow is replaced by chat and the l
 
 ## How it maps to the assignment
 
-| Requirement | Implementation |
-|---|---|
-| **LLM** | Claude (`claude-opus-5-5`) for chat and fit-scoring, with **Workers AI Llama 3.3** (`@cf/meta/llama-3.3-70b-instruct-fp8-fast`) as the automatic fallback. Optionally routed through **AI Gateway**. |
-| **Workflow / coordination** | `JobSearchAgent` (Agents SDK, Durable Object) schedules itself with `scheduleEvery(6h)` and fans out to `BoardScanAgent` **sub-agents** (facets), one per board, 3 at a time. |
-| **User input via chat** | React chat UI (`useAgentChat`) served as Worker static assets, plus a leads panel that triages over `@callable` RPC. |
-| **Memory / state** | Parent SQLite: résumé, preferences, watchlist, leads, run history. Each sub-agent's own SQLite: which postings that board has already seen, so a posting is only judged once. Chat history persists through `AIChatAgent`. |
+| Requirement                 | Implementation                                                                                                                                                                                                             |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **LLM**                     | Claude for chat (`claude-opus-5-5`) and fit-scoring (`claude-haiku-5-5`), with **Workers AI Llama 3.3** (`@cf/meta/llama-3.3-70b-instruct-fp8-fast`) as the automatic fallback. Optionally routed through **AI Gateway**.  |
+| **Workflow / coordination** | `JobSearchAgent` (Agents SDK, Durable Object) schedules itself with `scheduleEvery(6h)` and fans out to `BoardScanAgent` **sub-agents** (facets), one per board, 3 at a time.                                              |
+| **User input via chat**     | React chat UI (`useAgentChat`) served as Worker static assets, plus a leads panel that triages over `@callable` RPC.                                                                                                       |
+| **Memory / state**          | Parent SQLite: résumé, preferences, watchlist, leads, run history. Each sub-agent's own SQLite: which postings that board has already seen, so a posting is only judged once. Chat history persists through `AIChatAgent`. |
 
 ## Architecture
 
@@ -40,6 +40,7 @@ replaced by SQL, and the Sheet's checkbox workflow is replaced by chat and the l
 ```
 
 Design notes carried over from JobFinder:
+
 - **Verify on the company's own board.** Only ATS-hosted company boards are scanned, so every lead's
   URL is the employer's own posting, never an aggregator re-post.
 - **A "Remote" label alone is not proof.** The location rule is judged by the LLM from the title and
@@ -61,6 +62,7 @@ npm run dev                      # http://localhost:5173
 ```
 
 Then, in chat:
+
 1. Paste your résumé, or attach it as a PDF (PDF reading needs Claude).
 2. Type "Add Cloudflare to my watchlist". The board is auto-detected; give a slug if the name doesn't match.
 3. Click **Scan now**, or say "scan Anthropic now" for a one-off company scan.
@@ -79,21 +81,22 @@ stronger protection, put the Worker behind Cloudflare Access.
 
 ### Configuration (`wrangler.jsonc` vars)
 
-| Var | Default | Purpose |
-|---|---|---|
-| `CHAT_MODEL` | `claude-opus-5-5` | Chat model |
-| `SCORE_MODEL` | `claude-opus-5-5` | Fit-scoring model (e.g. `claude-haiku-5-5` for lower cost) |
-| `CF_ACCOUNT_ID`, `AI_GATEWAY_ID` | empty | Set both to route Claude through AI Gateway |
+| Var                              | Default            | Purpose                                                                         |
+| -------------------------------- | ------------------ | ------------------------------------------------------------------------------- |
+| `CHAT_MODEL`                     | `claude-opus-5-5`  | Chat model                                                                      |
+| `SCORE_MODEL`                    | `claude-haiku-5-5` | Fit-scoring model                                                               |
+| `SCORE_EFFORT`                   | `medium`           | Scoring effort (`low` / `medium` / `high`); Haiku at `low` grades too leniently |
+| `CF_ACCOUNT_ID`, `AI_GATEWAY_ID` | empty              | Set both to route Claude through AI Gateway                                     |
 
 ## Files
 
-| File | What it does |
-|---|---|
-| `src/server.ts` | `JobSearchAgent`: SQL schema, schedule, scan orchestration, chat tools, auth gate |
-| `src/board-scan-agent.ts` | `BoardScanAgent` sub-agent: fetch → dedupe → prefilter → score one board |
-| `src/ats.ts` | Greenhouse / Lever / Ashby API clients and board detection |
-| `src/scoring.ts` | Preferences, title prefilter, Claude scoring with Llama fallback |
-| `src/app.tsx`, `src/leads-panel.tsx` | Chat UI and leads panel |
-| `Prompts.md` | Prompt history for this build (AI-assisted, as the assignment requires) |
+| File                                 | What it does                                                                      |
+| ------------------------------------ | --------------------------------------------------------------------------------- |
+| `src/server.ts`                      | `JobSearchAgent`: SQL schema, schedule, scan orchestration, chat tools, auth gate |
+| `src/board-scan-agent.ts`            | `BoardScanAgent` sub-agent: fetch → dedupe → prefilter → score one board          |
+| `src/ats.ts`                         | Greenhouse / Lever / Ashby API clients and board detection                        |
+| `src/scoring.ts`                     | Preferences, title prefilter, Claude scoring with Llama fallback                  |
+| `src/app.tsx`, `src/leads-panel.tsx` | Chat UI and leads panel                                                           |
+| `Prompts.md`                         | Prompt history for this build (AI-assisted, as the assignment requires)           |
 
 Scaffolded from [`cloudflare/agents-starter`](https://github.com/cloudflare/agents-starter) (MIT).

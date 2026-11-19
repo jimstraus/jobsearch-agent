@@ -109,6 +109,7 @@ ${desc}
 export type ScoringEnv = {
   ANTHROPIC_API_KEY?: string;
   SCORE_MODEL?: string;
+  SCORE_EFFORT?: string;
   CF_ACCOUNT_ID?: string;
   AI_GATEWAY_ID?: string;
   AI: Ai;
@@ -147,7 +148,7 @@ async function scoreWithClaude(
     ],
     messages: [{ role: "user", content: jobPrompt(job) }],
     output_config: {
-      effort: "low",
+      effort: (env.SCORE_EFFORT || "low") as "low" | "medium" | "high",
       format: { type: "json_schema", schema: SCORE_SCHEMA }
     }
   });

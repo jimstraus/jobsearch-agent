@@ -27,3 +27,11 @@ Session: 2026-11-18
 5. Commit it and push and then check up
 
 6. Yes, show the real error and lower the limit to 3 times
+
+7. Added key, but claude scoring failing
+
+8. Try again
+
+9. updated scoring to use Haiku.  Validate a score
+
+10. yes, make the change, then commit everything
