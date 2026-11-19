@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jobsearch-agent",
+  "main": "src/server.ts",
+  "compatibility_date": "2026-06-11",
+  "compatibility_flags": ["nodejs_compat"],
+  "ai": { "binding": "AI", "remote": true },
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/agents/*"]
+  },
+  "durable_objects": {
+    "bindings": [{ "class_name": "JobSearchAgent", "name": "JobSearchAgent" }]
+  },
+  "migrations": [{ "new_sqlite_classes": ["JobSearchAgent"], "tag": "v1" }],
+  "vars": {
+    // Models (override per environment). Scoring falls back to Workers AI Llama 3.3 if Claude fails.
+    "CHAT_MODEL": "claude-opus-5-5",
+    "SCORE_MODEL": "claude-opus-5-5",
+    // Set both to route Claude through Cloudflare AI Gateway; leave empty to call Anthropic directly.
+    "CF_ACCOUNT_ID": "",
+    "AI_GATEWAY_ID": ""
+  },
+  // Secrets (wrangler secret put): ANTHROPIC_API_KEY, APP_TOKEN
+  "observability": { "enabled": true }
+}
