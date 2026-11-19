@@ -35,5 +35,3 @@ Session: 2026-11-18
 9. updated scoring to use Haiku.  Validate a score
 
 10. yes, make the change, then commit everything
-
-11. when I did "gh repo create --source=. --public --push" it created the repo but was unable to add remote 'origin'
